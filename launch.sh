@@ -11,11 +11,6 @@ sudo systemctl start vpnc
 echo "Waiting for tunnel..."
 while ! ip link show tun0 > /dev/null 2>&1; do sleep 2; done
 
-echo "Preparing Wi-Fi interface for AP mode..."
-sudo ip link set wlan0 down
-sudo iw dev wlan0 set type __ap
-sudo ip link set wlan0 up
-
 echo "Starting hotspot..."
 # kill any previous instance
 sudo pkill hostapd 2>/dev/null || true
