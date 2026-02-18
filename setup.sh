@@ -109,6 +109,16 @@ sudo ip link set wlan0 down || true
 sudo rfkill unblock wifi || true
 sudo ip link set wlan0 up || true
 
+# Configure NetworkManager to ignore wlan0 (if installed)
+echo "Configuring NetworkManager to ignore wlan0..."
+sudo mkdir -p /etc/NetworkManager/conf.d
+sudo tee /etc/NetworkManager/conf.d/unmanaged-wlan0.conf > /dev/null <<EOF
+[keyfile]
+unmanaged-devices=interface-name:wlan0
+EOF
+sudo systemctl restart NetworkManager 2>/dev/null || true
+
+
 echo ""
 echo "Hotspot setup complete."
 echo "SSID: $HOTSPOT_SSID"
