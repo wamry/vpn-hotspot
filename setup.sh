@@ -11,13 +11,15 @@ HOTSPOT_SUBNET="192.168.4"
 
 echo "Installing hotspot packages..."
 sudo apt update
-sudo apt install -y hostapd dnsmasq iptables iptables-persistent
+sudo apt install -y hostapd dnsmasq iptables iptables-persistent dhcpcd5
+
+echo "Enabling DHCP client daemon..."
+sudo systemctl enable dhcpcd
+sudo systemctl start dhcpcd
 
 echo "Setting Wi-Fi regulatory domain..."
-
 # Required for hotspot/AP mode on Raspberry Pi
 sudo mkdir -p /etc/wpa_supplicant
-
 sudo tee /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null <<EOF
 country=EG
 EOF
