@@ -109,10 +109,22 @@ sudo systemctl stop wpa_supplicant@wlan0 2>/dev/null || true
 sudo systemctl disable wpa_supplicant@wlan0 2>/dev/null || true
 sudo systemctl mask wpa_supplicant@wlan0 2>/dev/null || true
 
-# Reset wlan0 so hostapd can take control
-sudo ip link set wlan0 down || true
-sudo rfkill unblock wifi || true
-sudo ip link set wlan0 up || true
+echo "Preparing Wi-Fi interface for AP mode..."
+# HARD RESET WIFI (Pi 5 requirement)
+sudo ip link set wlan0 down
+sudo rfkill unblock wifi
+sudo iw dev wlan0 del 2>/dev/null || true
+sleep 2
+
+# Recreate wlan0 in AP mode
+sudo iw phy phy0 interface add wlan0 type __ap
+sleep 1
+
+# Assign hotspot IP
+sudo ip addr flush dev wlan0
+sudo ip addr add 192.168.4.1/24 dev wlan0
+sudo ip link set wlan0 up
+sleep 2
 
 # Configure NetworkManager to ignore wlan0 (if installed)
 echo "Configuring NetworkManager to ignore wlan0..."
