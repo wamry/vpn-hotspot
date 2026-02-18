@@ -12,7 +12,10 @@ sudo iw dev wlan0 set type __ap
 sudo ip link set wlan0 up
 
 echo "Starting hotspot..."
-sudo systemctl start hostapd
+# kill any previous instance
+sudo pkill hostapd 2>/dev/null || true
+# start hostapd manually (no systemd)
+sudo /usr/sbin/hostapd -B /etc/hostapd/hostapd.conf
 sleep 3
 sudo systemctl start dnsmasq
 sleep 2
@@ -20,10 +23,13 @@ sleep 2
 echo "Applying firewall..."
 sudo iptables -t nat -F
 sudo iptables -F FORWARD
-
+# Allow hotspot clients to talk to the Pi (gateway/DNS/DHCP)
+sudo iptables -A INPUT -i wlan0 -j ACCEPT
+# NAT hotspot traffic into VPN
 sudo iptables -t nat -A POSTROUTING -o tun0 -j MASQUERADE
 sudo iptables -A FORWARD -i wlan0 -o tun0 -j ACCEPT
 sudo iptables -A FORWARD -i tun0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+# Kill-switch: block bypassing VPN via eth0
 sudo iptables -A FORWARD -i wlan0 -o eth0 -j REJECT
 
 echo "Applying routing..."

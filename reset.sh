@@ -36,6 +36,10 @@ echo "Reloading systemd..."
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 
+echo "Restoring NetworkManager control of wlan0..."
+sudo rm -f /etc/NetworkManager/conf.d/unmanaged-wlan0.conf
+sudo systemctl restart NetworkManager 2>/dev/null || true
+
 echo ""
 echo "Reset complete."
 echo "Reboot recommended."
