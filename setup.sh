@@ -102,8 +102,13 @@ echo "Disabling Wi-Fi client services (required for hotspot)..."
 # Stop Wi-Fi client so wlan0 can be an AP
 sudo systemctl stop wpa_supplicant 2>/dev/null || true
 sudo systemctl disable wpa_supplicant 2>/dev/null || true
+sudo systemctl mask wpa_supplicant 2>/dev/null || true
+
+# Also disable per-interface instance
 sudo systemctl stop wpa_supplicant@wlan0 2>/dev/null || true
 sudo systemctl disable wpa_supplicant@wlan0 2>/dev/null || true
+sudo systemctl mask wpa_supplicant@wlan0 2>/dev/null || true
+
 # Reset wlan0 so hostapd can take control
 sudo ip link set wlan0 down || true
 sudo rfkill unblock wifi || true

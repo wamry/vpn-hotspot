@@ -28,9 +28,13 @@ echo "Removing routing table entry..."
 sudo sed -i '/200 vpn/d' /etc/iproute2/rt_tables 2>/dev/null || true
 
 echo "Re-enabling Wi-Fi client (wpa_supplicant)..."
+sudo systemctl unmask wpa_supplicant 2>/dev/null || true
 sudo systemctl enable wpa_supplicant 2>/dev/null || true
-sudo systemctl enable wpa_supplicant@wlan0 2>/dev/null || true
 sudo systemctl start wpa_supplicant 2>/dev/null || true
+
+sudo systemctl unmask wpa_supplicant@wlan0 2>/dev/null || true
+sudo systemctl enable wpa_supplicant@wlan0 2>/dev/null || true
+
 
 echo "Reloading systemd..."
 sudo systemctl daemon-reexec
