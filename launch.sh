@@ -9,11 +9,15 @@ while ! ip link show tun0 > /dev/null 2>&1; do sleep 2; done
 echo "Preparing Wi-Fi interface for AP mode..."
 sudo ip link set wlan0 down
 sudo iw dev wlan0 set type __ap
+sudo ip addr flush dev wlan0
+sudo ip addr add 192.168.4.1/24 dev wlan0
 sudo ip link set wlan0 up
 
 echo "Starting hotspot..."
-sudo systemctl start hostapd dnsmasq
+sudo systemctl start hostapd
 sleep 3
+sudo systemctl start dnsmasq
+sleep 2
 
 echo "Applying firewall..."
 sudo iptables -t nat -F
