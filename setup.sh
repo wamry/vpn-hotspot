@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo "Running setup script from: $SCRIPT_DIR"
 #######################################
 # CONFIG - EDIT THESE ONLY
 #######################################
@@ -147,6 +149,27 @@ unmanaged-devices=interface-name:wlan0
 EOF
 sudo systemctl restart NetworkManager 2>/dev/null || true
 
+echo "Installing auto-launch service for boot..."
+sudo tee /etc/systemd/system/vpn-hotspot-launch.service > /dev/null <<EOF
+[Unit]
+Description=VPN Hotspot Auto Launch
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash ${SCRIPT_DIR}/launch.sh
+RemainAfterExit=yes
+TimeoutStartSec=180
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo chmod +x "${SCRIPT_DIR}/launch.sh"
+sudo systemctl daemon-reload
+sudo systemctl enable vpn-hotspot-launch.service
+
 echo "Restarting hostapd to apply config..."
 sudo systemctl restart hostapd 2>/dev/null || true
 sleep 2
@@ -162,4 +185,5 @@ echo "Hotspot setup complete."
 echo "SSID: $HOTSPOT_SSID"
 echo "Password: $HOTSPOT_PASSWORD"
 echo ""
-echo "Next step: run ./launch.sh"
+echo "launch.sh is now configured to auto-run at boot via vpn-hotspot-launch.service"
+echo "You can still run it manually with: ./launch.sh"
