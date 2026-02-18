@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e  # Exit on any error
 
+#######################################
+# CONFIG - EDIT THESE ONLY
+#######################################
+HOTSPOT_SUBNET="192.168.4" # Update in setup.sh also
+#######################################
+
 error_exit() {
   echo "ERROR: $1" >&2
   exit 1
@@ -16,7 +22,7 @@ echo "Resetting Wi-Fi interface..."
 sudo ip addr flush dev wlan0 2>/dev/null || true
 sudo ip link set wlan0 up 2>/dev/null || true
 sleep 1
-sudo ip addr add 192.168.4.1/24 dev wlan0 2>/dev/null || true
+sudo ip addr add "${HOTSPOT_SUBNET}.1/24" dev wlan0 2>/dev/null || true
 sleep 1
 
 echo "Starting hostapd before VPN..."
@@ -78,7 +84,7 @@ echo "Firewall rules applied"
 echo "Applying routing rules..."
 # Clean up old rules for this subnet (delete all rules matching our subnet)
 # Get all rule priorities for our subnet and delete them
-ip rule show | grep "192.168.4.0/24" | awk '{print $1}' | sed 's/:$//' | while read prio; do
+ip rule show | grep -F "${HOTSPOT_SUBNET}.0/24" | awk '{print $1}' | sed 's/:$//' | while read prio; do
   sudo ip rule del prio "$prio" 2>/dev/null
 done
 sleep 1
