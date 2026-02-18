@@ -77,14 +77,23 @@ sudo touch /etc/iproute2/rt_tables
 
 grep -q "200 vpn" /etc/iproute2/rt_tables || \
 echo "200 vpn" | sudo tee -a /etc/iproute2/rt_tables
-
 sudo systemctl daemon-reload
 
 echo "Unmasking and enabling hotspot services..."
-
 sudo systemctl unmask hostapd
 sudo systemctl enable hostapd
 sudo systemctl enable dnsmasq
+
+echo "Disabling Wi-Fi client services (required for hotspot)..."
+# Stop Wi-Fi client so wlan0 can be an AP
+sudo systemctl stop wpa_supplicant 2>/dev/null || true
+sudo systemctl disable wpa_supplicant 2>/dev/null || true
+sudo systemctl stop wpa_supplicant@wlan0 2>/dev/null || true
+sudo systemctl disable wpa_supplicant@wlan0 2>/dev/null || true
+# Reset wlan0 so hostapd can take control
+sudo ip link set wlan0 down || true
+sudo rfkill unblock wifi || true
+sudo ip link set wlan0 up || true
 
 echo ""
 echo "Hotspot setup complete."
