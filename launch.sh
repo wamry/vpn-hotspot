@@ -12,8 +12,8 @@ sudo iw dev wlan0 set type __ap
 sudo ip link set wlan0 up
 
 echo "Starting hotspot..."
-sudo systemctl start hostapd
-sudo systemctl start dnsmasq
+sudo systemctl start hostapd dnsmasq
+sleep 3
 
 echo "Applying firewall..."
 sudo iptables -t nat -F
