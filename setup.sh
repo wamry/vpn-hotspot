@@ -4,8 +4,8 @@ set -e
 #######################################
 # CONFIG — EDIT THESE ONLY
 #######################################
-HOTSPOT_SSID="PiVPNHotspot"
-HOTSPOT_PASSWORD="raspberryvpn"
+HOTSPOT_SSID="IPSEC"
+HOTSPOT_PASSWORD="bigfoot1"
 HOTSPOT_SUBNET="192.168.4"
 #######################################
 
