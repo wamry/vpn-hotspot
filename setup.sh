@@ -34,7 +34,6 @@ channel=6
 
 ieee80211n=1
 wmm_enabled=1
-ht_capab=[HT40][SHORT-GI-20][SHORT-GI-40]
 
 macaddr_acl=0
 auth_algs=1
