@@ -81,6 +81,12 @@ echo "200 vpn" | sudo tee -a /etc/iproute2/rt_tables
 
 sudo systemctl daemon-reload
 
+echo "Unmasking and enabling hotspot services..."
+
+sudo systemctl unmask hostapd
+sudo systemctl enable hostapd
+sudo systemctl enable dnsmasq
+
 echo ""
 echo "Hotspot setup complete."
 echo "SSID: $HOTSPOT_SSID"
