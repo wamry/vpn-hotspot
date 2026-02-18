@@ -13,6 +13,18 @@ echo "Installing hotspot packages..."
 sudo apt update
 sudo apt install -y hostapd dnsmasq iptables iptables-persistent
 
+echo "Setting Wi-Fi regulatory domain..."
+
+# Required for hotspot/AP mode on Raspberry Pi
+sudo mkdir -p /etc/wpa_supplicant
+
+sudo tee /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null <<EOF
+country=EG
+EOF
+
+# Also configure through raspi-config silently (no popup)
+sudo raspi-config nonint do_wifi_country EG 2>/dev/null || true
+
 echo "Configuring wlan0 static IP..."
 grep -q "interface wlan0" /etc/dhcpcd.conf || sudo tee -a /etc/dhcpcd.conf > /dev/null <<EOF
 
