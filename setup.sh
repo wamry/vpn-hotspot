@@ -37,7 +37,7 @@ EOF
 
 echo "Creating hostapd config..."
 sudo mkdir -p /etc/hostapd
-
+sudo rm -f /etc/hostapd/hostapd.conf
 sudo tee /etc/hostapd/hostapd.conf > /dev/null <<EOF
 interface=wlan0
 driver=nl80211
