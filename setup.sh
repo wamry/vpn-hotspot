@@ -2,12 +2,17 @@
 set -e
 
 #######################################
-# CONFIG — EDIT THESE ONLY
+# CONFIG - EDIT THESE ONLY
 #######################################
 HOTSPOT_SSID="IPSEC"
 HOTSPOT_PASSWORD="bigfoot1"
 HOTSPOT_SUBNET="192.168.4"
 #######################################
+
+error_exit() {
+  echo "ERROR: $1" >&2
+  exit 1
+}
 
 echo "Installing hotspot packages..."
 sudo apt update
@@ -46,7 +51,7 @@ ssid=${HOTSPOT_SSID}
 hw_mode=g
 channel=6
 
-ieee80211n=1
+ieee80211n=0
 wmm_enabled=1
 
 macaddr_acl=0
@@ -64,8 +69,12 @@ sudo mkdir -p /etc/systemd/system/hostapd.service.d
 
 sudo tee /etc/systemd/system/hostapd.service.d/override.conf > /dev/null <<EOF
 [Service]
+Type=simple
 ExecStart=
 ExecStart=/usr/sbin/hostapd /etc/hostapd/hostapd.conf
+TimeoutStartSec=120
+Restart=always
+RestartSec=3
 EOF
 
 echo "Configuring DHCP server..."
@@ -74,16 +83,33 @@ sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.bak 2>/dev/null || true
 sudo tee /etc/dnsmasq.conf > /dev/null <<EOF
 interface=wlan0
 bind-interfaces
+no-resolv
+dhcp-authoritative
 dhcp-range=${HOTSPOT_SUBNET}.10,${HOTSPOT_SUBNET}.100,255.255.255.0,24h
+dhcp-option=3,${HOTSPOT_SUBNET}.1
+dhcp-option=6,${HOTSPOT_SUBNET}.1
+dhcp-option=26,1380
+server=8.8.8.8
+server=8.8.4.4
+log-queries
+log-dhcp
 EOF
 
 echo "Enable IP forwarding..."
 grep -q "net.ipv4.ip_forward=1" /etc/sysctl.conf || \
 echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf
 
-sudo sysctl -p
+echo "Writing kernel forwarding/rpf settings..."
+sudo tee /etc/sysctl.d/99-vpn-hotspot.conf > /dev/null <<EOF
+net.ipv4.ip_forward=1
+net.ipv4.conf.all.rp_filter=0
+net.ipv4.conf.default.rp_filter=0
+net.ipv4.conf.wlan0.rp_filter=0
+net.ipv4.conf.tun0.rp_filter=0
+EOF
 
-echo "Create routing table..."
+sudo sysctl -p
+sudo sysctl --system >/dev/null
 
 # Ensure directory + file exist (Trixie/Bookworm safe)
 sudo mkdir -p /etc/iproute2
@@ -109,24 +135,10 @@ sudo systemctl stop wpa_supplicant@wlan0 2>/dev/null || true
 sudo systemctl disable wpa_supplicant@wlan0 2>/dev/null || true
 sudo systemctl mask wpa_supplicant@wlan0 2>/dev/null || true
 
-echo "Preparing Wi-Fi interface for AP mode..."
-# HARD RESET WIFI (Pi 5 requirement)
-sudo ip link set wlan0 down
-sudo rfkill unblock wifi
-sudo iw dev wlan0 del 2>/dev/null || true
-sleep 2
+echo "Disabling systemd hostapd/dnsmasq services (will be started manually by launch.sh)..."
+sudo systemctl stop hostapd 2>/dev/null || true
+sudo systemctl stop dnsmasq 2>/dev/null || true
 
-# Recreate wlan0 in AP mode
-sudo iw phy phy0 interface add wlan0 type __ap
-sleep 1
-
-# Assign hotspot IP
-sudo ip addr flush dev wlan0
-sudo ip addr add 192.168.4.1/24 dev wlan0
-sudo ip link set wlan0 up
-sleep 2
-
-# Configure NetworkManager to ignore wlan0 (if installed)
 echo "Configuring NetworkManager to ignore wlan0..."
 sudo mkdir -p /etc/NetworkManager/conf.d
 sudo tee /etc/NetworkManager/conf.d/unmanaged-wlan0.conf > /dev/null <<EOF
@@ -135,10 +147,19 @@ unmanaged-devices=interface-name:wlan0
 EOF
 sudo systemctl restart NetworkManager 2>/dev/null || true
 
+echo "Restarting hostapd to apply config..."
+sudo systemctl restart hostapd 2>/dev/null || true
+sleep 2
+
+echo ""
+echo "Validating setup..."
+[ -f /etc/hostapd/hostapd.conf ] && echo "hostapd config exists" || error_exit "hostapd config not found"
+[ -f /etc/dnsmasq.conf ] && echo "dnsmasq config exists" || error_exit "dnsmasq config not found"
+ip link show wlan0 &>/dev/null && echo "wlan0 interface exists" || error_exit "wlan0 interface not found"
 
 echo ""
 echo "Hotspot setup complete."
 echo "SSID: $HOTSPOT_SSID"
 echo "Password: $HOTSPOT_PASSWORD"
 echo ""
-echo "Next step: run launch.sh"
+echo "Next step: run ./launch.sh"
