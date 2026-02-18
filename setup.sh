@@ -71,6 +71,11 @@ echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.conf
 sudo sysctl -p
 
 echo "Create routing table..."
+
+# Ensure directory + file exist (Trixie/Bookworm safe)
+sudo mkdir -p /etc/iproute2
+sudo touch /etc/iproute2/rt_tables
+
 grep -q "200 vpn" /etc/iproute2/rt_tables || \
 echo "200 vpn" | sudo tee -a /etc/iproute2/rt_tables
 
