@@ -1,5 +1,10 @@
 #!/bin/bash
 
+echo "Stopping previous hotspot if running..."
+sudo systemctl stop dnsmasq 2>/dev/null || true
+sudo pkill hostapd 2>/dev/null || true
+sleep 2
+
 echo "Starting VPN..."
 sudo systemctl start vpnc
 
