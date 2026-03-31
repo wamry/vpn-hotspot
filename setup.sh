@@ -7,7 +7,7 @@ echo "Running setup script from: $SCRIPT_DIR"
 # CONFIG - EDIT THESE ONLY
 #######################################
 HOTSPOT_SSID="IPSEC"
-HOTSPOT_PASSWORD="bigfoot1"
+HOTSPOT_PASSWORD="changeme123"
 HOTSPOT_SUBNET="192.168.4" # Update in launch.sh also
 #######################################
 
